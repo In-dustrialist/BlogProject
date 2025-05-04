@@ -1,0 +1,31 @@
+﻿@model IEnumerable<ApplicationUser>
+
+<h1>Users</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>
+                    <a href="@Url.Action("Details", "Users", new { id = user.Id })">Details</a>
+                    <a href="@Url.Action("Edit", "Users", new { id = user.Id })">Edit</a>
+                    <form action="@Url.Action("Delete", "Users", new { id = user.Id })" method="post" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a href="@Url.Action("Register", "Users")">Register New User</a>
