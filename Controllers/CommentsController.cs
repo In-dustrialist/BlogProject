@@ -3,73 +3,99 @@ using BlogProject.Models;
 using BlogProject.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace BlogProject.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CommentController : ControllerBase
+    public class CommentsController : Controller
     {
         private readonly BlogDbContext _context;
 
-        public CommentController(BlogDbContext context)
+        public CommentsController(BlogDbContext context)
         {
             _context = context;
         }
 
+        
+        public async Task<IActionResult> Index()
+        {
+            var comments = await _context.Comments
+                .Include(c => c.Author)  
+                .Include(c => c.Post)   
+                .ToListAsync();
+
+            return View(comments);
+        }
+
+       
+        public IActionResult Create()
+        {
+            return View();
+        }
+
        
         [HttpPost]
-        public async Task<IActionResult> CreateComment([FromBody] Comment model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Comment model)
         {
-            _context.Comments.Add(model);
-            await _context.SaveChangesAsync();
-            return Ok(model);
+            if (ModelState.IsValid)
+            {
+                _context.Comments.Add(model);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));  
+            }
+            return View(model);
         }
 
         
-        [HttpGet]
-        public async Task<IActionResult> GetAllComments()
+        public async Task<IActionResult> Delete(int id)
         {
-            var comments = await _context.Comments.ToListAsync();
-            return Ok(comments);
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment != null)
+            {
+                _context.Comments.Remove(comment);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        
+        public async Task<IActionResult> Edit(int id)
+        {
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment == null)
+                return NotFound();
+            return View(comment);
+        }
+
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Comment model)
+        {
+            if (id != model.Id)
+                return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                _context.Comments.Update(model);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(model);
         }
 
        
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetCommentById(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var comment = await _context.Comments.FindAsync(id);
+            var comment = await _context.Comments
+                .Include(c => c.Author)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (comment == null)
                 return NotFound();
 
-            return Ok(comment);
-        }
-
-        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditComment(int id, [FromBody] Comment model)
-        {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
-                return NotFound();
-
-            comment.Content = model.Content;
-
-            await _context.SaveChangesAsync();
-            return Ok(comment);
-        }
-
-        
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteComment(int id)
-        {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
-                return NotFound();
-
-            _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Comment deleted successfully" });
+            return View(comment);
         }
     }
 }

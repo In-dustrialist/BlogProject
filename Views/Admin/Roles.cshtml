@@ -1,0 +1,21 @@
+﻿@model IEnumerable<BlogProject.Models.Role>
+
+<h2>Список ролей</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Описание</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var role in Model)
+        {
+            <tr>
+                <td>@role.Name</td>
+                <td>@role.Description</td>
+            </tr>
+        }
+    </tbody>
+</table>

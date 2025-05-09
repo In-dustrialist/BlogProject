@@ -2,86 +2,139 @@
 using Microsoft.AspNetCore.Mvc;
 using BlogProject.Models;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogProject.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AccountController : ControllerBase
+    [Route("account")]
+    public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
 
         public AccountController(UserManager<ApplicationUser> userManager,
-                                 SignInManager<ApplicationUser> signInManager,
-                                 RoleManager<IdentityRole> roleManager)
+                                 SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
         }
 
         
+        [HttpGet("register")]
+        public IActionResult Register() => View();
+
+       
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             if (model.Password != model.ConfirmPassword)
             {
-                return BadRequest(new { message = "Passwords do not match" });
+                ModelState.AddModelError("", "Пароли не совпадают.");
+                return View(model);
             }
 
-            var user = new ApplicationUser { UserName = model.Username, Email = model.Email };
+            var user = new ApplicationUser
+            {
+                UserName = model.Username,
+                Email = model.Email
+            };
+
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                
-                await _userManager.AddToRoleAsync(user, "User");
-                return Ok(new { message = "User registered successfully" });
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction("Index", "Home");
             }
 
-            return BadRequest(result.Errors);
+            foreach (var error in result.Errors)
+                ModelState.AddModelError("", error.Description);
+
+            return View(model);
         }
 
-        
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        // Страница входа
+        [HttpGet("login")]
+        public IActionResult Login(string returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        // Обработка входа
+        [HttpPost("login")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginModel model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
-                return Unauthorized(new { message = "Invalid credentials" });
-
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
-            if (result.Succeeded)
             {
-                
-                return Ok(new { message = "Login successful" });
+                ModelState.AddModelError("", "Неверные учетные данные.");
+                return View(model);
             }
 
-            return Unauthorized(new { message = "Invalid credentials" });
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
+
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            ModelState.AddModelError("", "Неверные учетные данные.");
+            return View(model);
         }
 
-        
+        // Выход
         [HttpPost("logout")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return Ok(new { message = "Logged out successfully" });
+            return RedirectToAction("Index", "Home");
         }
     }
 
+    // Модели
+
     public class RegisterViewModel
     {
+        [Required(ErrorMessage = "Введите имя пользователя")]
         public string Username { get; set; }
+
+        [Required(ErrorMessage = "Введите Email")]
+        [EmailAddress(ErrorMessage = "Некорректный Email")]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "Введите пароль")]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
-        public string ConfirmPassword { get; set; }  // Подтверждение пароля
+
+        [Required(ErrorMessage = "Подтвердите пароль")]
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "Пароли не совпадают")]
+        public string ConfirmPassword { get; set; }
     }
 
     public class LoginModel
     {
+        [Required(ErrorMessage = "Введите Email")]
+        [EmailAddress(ErrorMessage = "Некорректный Email")]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "Введите пароль")]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
     }
 }

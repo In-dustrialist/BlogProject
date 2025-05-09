@@ -1,75 +1,94 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BlogProject.Models;
 using BlogProject.Data;
-using Microsoft.EntityFrameworkCore;
+using BlogProject.Models;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlogProject.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TagController : ControllerBase
+    public class TagsController : Controller
     {
         private readonly BlogDbContext _context;
 
-        public TagController(BlogDbContext context)
+        public TagsController(BlogDbContext context)
         {
             _context = context;
         }
 
         
-        [HttpPost]
-        public async Task<IActionResult> CreateTag([FromBody] Tag model)
-        {
-            _context.Tags.Add(model);
-            await _context.SaveChangesAsync();
-            return Ok(model);
-        }
-
-        
-        [HttpGet]
-        public async Task<IActionResult> GetAllTags()
+        public async Task<IActionResult> Index()
         {
             var tags = await _context.Tags.ToListAsync();
-            return Ok(tags);
+            return View(tags);
         }
 
         
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTagById(int id)
+        public IActionResult Create()
         {
-            var tag = await _context.Tags.FindAsync(id);
-            if (tag == null)
-                return NotFound();
-
-            return Ok(tag);
+            return View();
         }
 
         
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditTag(int id, [FromBody] Tag model)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Tag tag)
         {
+            if (ModelState.IsValid)
+            {
+                _context.Add(tag);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(tag);
+        }
+
+        
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             var tag = await _context.Tags.FindAsync(id);
             if (tag == null)
+            {
                 return NotFound();
-
-            tag.Name = model.Name;
-
-            await _context.SaveChangesAsync();
-            return Ok(tag);
+            }
+            return View(tag);
         }
 
        
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTag(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Tag tag)
         {
-            var tag = await _context.Tags.FindAsync(id);
-            if (tag == null)
+            if (id != tag.Id)
+            {
                 return NotFound();
+            }
 
-            _context.Tags.Remove(tag);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Tag deleted successfully" });
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(tag);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Tags.Any(e => e.Id == tag.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(tag);
         }
     }
 }

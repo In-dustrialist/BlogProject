@@ -1,0 +1,19 @@
+﻿@model BlogProject.Models.Tag
+
+@{
+    ViewData["Title"] = "Редактирование тега";
+}
+
+<h2>Редактирование тега</h2>
+
+<form asp-action="Edit" method="post">
+    <div class="form-group">
+        <label asp-for="Name" class="control-label">Название</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+
+<br />
+<a asp-action="Index">Перейти к списку всех тегов</a>

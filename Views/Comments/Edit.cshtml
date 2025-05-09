@@ -1,0 +1,16 @@
+﻿@model BlogProject.Models.Comment
+
+@{
+    ViewData["Title"] = "Редактировать комментарий";
+}
+
+<h1>Редактировать комментарий</h1>
+
+<form asp-action="Edit" method="post">
+    <div class="form-group">
+        <label asp-for="Content" class="control-label"></label>
+        <textarea asp-for="Content" class="form-control"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+</form>

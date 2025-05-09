@@ -1,0 +1,38 @@
+﻿@model IEnumerable<BlogProject.Models.Post>
+
+@{
+    ViewData["Title"] = "Все статьи";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Все статьи</h1>
+
+    @foreach (var post in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3 class="card-title">@post.Title</h3>
+                <p class="card-text">@post.Summary</p>
+                <p><small>Автор: @post.AuthorId | Дата: @post.CreatedAt.ToShortDateString()</small></p>
+
+                <p>
+                    <strong>Теги:</strong>
+                    @foreach (var tag in post.PostTags.Select(pt => pt.Tag))
+                    {
+                        <span class="badge bg-primary me-1">@tag.Name</span>
+                    }
+                </p>
+
+                <p><strong>Просмотры:</strong> @post.ViewCount</p>
+
+                <a asp-action="Details" asp-route-id="@post.Id" class="btn btn-outline-primary btn-sm">Подробнее</a>
+
+                @* Только для админов или модераторов можно добавить кнопки редактирования/удаления *@
+                @if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
+                {
+                    <a asp-action="Edit" asp-route-id="@post.Id" class="btn btn-warning btn-sm ms-2">Редактировать</a>
+                }
+            </div>
+        </div>
+    }
+</div>

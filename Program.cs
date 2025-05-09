@@ -1,18 +1,17 @@
-using Microsoft.AspNetCore.Identity;
-using BlogProject.Models;
 using BlogProject.Data;
+using BlogProject.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 builder.Services.AddDbContext<BlogDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))); 
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, Role>()
     .AddEntityFrameworkStores<BlogDbContext>()
     .AddDefaultTokenProviders();
 
@@ -26,39 +25,34 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 1;
 });
 
-
 builder.Services.AddAuthentication()
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login"; 
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Error/403";
     });
-
-
-builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error/500");
+    app.UseStatusCodePagesWithReExecute("/Error/{0}");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); 
+app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication();  
-app.UseAuthorization();  
-
+app.UseAuthentication();
+app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await UserSeeder.SeedUsers(userManager, roleManager); 
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    await RoleSeeder.SeedRoles(roleManager);
 }
 
 app.MapControllerRoute(

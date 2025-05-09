@@ -6,14 +6,12 @@ namespace BlogProject.Data
 {
     public class UserSeeder
     {
-        public static async Task SeedUsers(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public static async Task SeedUsers(UserManager<ApplicationUser> userManager, RoleManager<Role> roleManager)
         {
-           
             await CreateRoleIfNotExists(roleManager, "Admin");
             await CreateRoleIfNotExists(roleManager, "Moderator");
             await CreateRoleIfNotExists(roleManager, "User");
 
-           
             if (await userManager.FindByEmailAsync("admin@example.com") == null)
             {
                 var adminUser = new ApplicationUser
@@ -57,13 +55,12 @@ namespace BlogProject.Data
             }
         }
 
-        
-        private static async Task CreateRoleIfNotExists(RoleManager<IdentityRole> roleManager, string roleName)
+        private static async Task CreateRoleIfNotExists(RoleManager<Role> roleManager, string roleName)
         {
             var role = await roleManager.FindByNameAsync(roleName);
             if (role == null)
             {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
+                await roleManager.CreateAsync(new Role { Name = roleName });
             }
         }
     }
