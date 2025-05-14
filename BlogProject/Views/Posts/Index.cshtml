@@ -1,0 +1,24 @@
+﻿@model IEnumerable<BlogProject.Models.Post>
+
+@{
+    ViewData["Title"] = "Все статьи";
+}
+
+<div class="container">
+    <h1>Все статьи</h1>
+
+    <p>
+        <a href="@Url.Action("Create", "Posts")" class="btn btn-primary">Добавить статью</a>
+    </p>
+
+    <div class="list-group">
+        @foreach (var post in Model)
+        {
+            <a href="@Url.Action("Details", "Posts", new { id = post.Id })" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">@post.Title</h5>
+                <p class="mb-1">@post.Content.Substring(0, Math.Min(100, post.Content.Length))...</p>
+                <small>Автор: @post.AuthorId</small>
+            </a>
+        }
+    </div>
+</div>

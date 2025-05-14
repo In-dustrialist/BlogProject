@@ -1,0 +1,16 @@
+﻿@model BlogProject.Models.Comment
+
+@{
+    ViewData["Title"] = "Комментарий";
+}
+
+<h1>Комментарий</h1>
+
+<div>
+    <strong>Автор:</strong> @Model.Author?.UserName
+</div>
+<div>
+    <strong>Комментарий:</strong> @Model.Content
+</div>
+
+<a href="@Url.Action("Index")">Назад к комментариям</a>

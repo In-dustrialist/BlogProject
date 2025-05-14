@@ -1,0 +1,45 @@
+﻿@model IEnumerable<BlogProject.Models.UserRolesViewModel>
+
+@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<h1 class="mb-4">Пользователи</h1>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @foreach (var user in Model)
+    {
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@user.UserName</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@user.Email</h6>
+
+                    <p class="card-text">
+                        <strong>Роли:</strong><br />
+                        @if (user.Roles.Any())
+                        {
+                            foreach (var role in user.Roles)
+                            {
+                                <span class="badge bg-primary me-1">@role</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">Нет ролей</span>
+                        }
+                    </p>
+                </div>
+                <div class="card-footer text-end bg-transparent border-top-0">
+                    @if (User.IsInRole("Администратор"))
+                    {
+                        <a href="@Url.Action("Edit", "Users", new { id = user.Id })" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                        <form action="@Url.Action("Delete", "Users", new { id = user.Id })" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Удалить</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
